@@ -59,10 +59,10 @@ data class ParsedStudentRow(
 enum class InvalidStudentReason {
     MISSING_NAME,
     MISSING_USN,
-    DUPLICATE_USN_IN_FILE,
-    INVALID_CELL_VALUE
+    INVALID_NAME,
+    INVALID_USN,
+    DUPLICATE_USN_IN_FILE
 }
-
 data class InvalidStudentRow(
     val sourceRowNumber: Int,
     val rawName: String,
