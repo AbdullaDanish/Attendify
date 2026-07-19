@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingUiState
+import com.abdulla.nsspda.ui.theme.AppSpacing
 
 @Composable
 fun AttendanceSaveBar(
@@ -27,24 +28,29 @@ fun AttendanceSaveBar(
     onSave: () -> Unit
 ) {
     Surface(
-        tonalElevation = 3.dp,
-        shadowElevation = 6.dp
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        shadowElevation = 4.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(16.dp),
+                .padding(
+                    horizontal = AppSpacing.ScreenHorizontal,
+                    vertical = AppSpacing.Medium
+                ),
             verticalArrangement =
-                Arrangement.spacedBy(8.dp)
+                Arrangement.spacedBy(AppSpacing.Small)
         ) {
-            if (uiState.hasUnsavedChanges) {
+            if (
+                uiState.hasExistingAttendance &&
+                uiState.hasUnsavedChanges
+            ) {
                 Text(
-                    text = "You have unsaved attendance changes.",
-                    style =
-                        MaterialTheme.typography.bodySmall,
-                    color =
-                        MaterialTheme.colorScheme.primary
+                    text = "You have unsaved changes",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -53,7 +59,8 @@ fun AttendanceSaveBar(
                 onClick = onSave,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 52.dp)
+                    .heightIn(min = 52.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (uiState.isSaving) {
                     CircularProgressIndicator(
@@ -69,15 +76,20 @@ fun AttendanceSaveBar(
                     )
 
                     Spacer(
-                        modifier = Modifier.size(8.dp)
+                        modifier = Modifier.size(
+                            AppSpacing.Small
+                        )
                     )
 
                     Text(
-                        if (uiState.hasExistingAttendance) {
-                            "Update attendance"
-                        } else {
-                            "Save attendance"
-                        }
+                        text =
+                            if (uiState.hasExistingAttendance) {
+                                "Update attendance"
+                            } else {
+                                "Save attendance"
+                            },
+                        style =
+                            MaterialTheme.typography.labelLarge
                     )
                 }
             }

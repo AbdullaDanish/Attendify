@@ -99,19 +99,17 @@ fun AttendanceDateCard(
             if (uiState.hasExistingAttendance) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color =
-                        MaterialTheme.colorScheme
-                            .tertiaryContainer
+                    color = MaterialTheme.colorScheme.surface.copy(
+                        alpha = 0.72f
+                    )
                 ) {
                     Text(
                         text =
                             "Attendance already exists for this date. Saving changes will update it.",
                         modifier = Modifier.padding(12.dp),
-                        style =
-                            MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall,
                         color =
-                            MaterialTheme.colorScheme
-                                .onTertiaryContainer
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

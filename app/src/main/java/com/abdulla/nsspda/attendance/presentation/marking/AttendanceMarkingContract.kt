@@ -20,8 +20,6 @@ data class AttendanceMarkingUiState(
     val subject: String = "",
 
     val selectedDate: LocalDate = LocalDate.now(),
-    val markingMode: AttendanceMarkingMode =
-        AttendanceMarkingMode.MARK_ABSENTEES,
 
     val students: List<AttendanceStudentItem> = emptyList(),
 
@@ -39,11 +37,10 @@ data class AttendanceMarkingUiState(
     val errorMessage: String? = null
 ) {
     val isClassValid: Boolean
-        get() {
-            return semester.isNotBlank() &&
+        get() =
+            semester.isNotBlank() &&
                     branch.isNotBlank() &&
                     subject.isNotBlank()
-        }
 
     val presentCount: Int
         get() = students.count { it.isPresent }
@@ -60,27 +57,61 @@ data class AttendanceMarkingUiState(
         }
 
     val hasUnsavedChanges: Boolean
-        get() {
-            if (students.isEmpty()) {
-                return false
-            }
-
-            return currentAttendance != originalAttendance
-        }
+        get() =
+            students.isNotEmpty() &&
+                    currentAttendance != originalAttendance
 
     val canSave: Boolean
-        get() {
-            return isClassValid &&
-                    students.isNotEmpty() &&
-                    !isLoading &&
+        get() =
+            !isLoading &&
                     !isSaving &&
-                    hasUnsavedChanges
-        }
+                    students.isNotEmpty() &&
+                    (
+                            !hasExistingAttendance ||
+                                    hasUnsavedChanges
+                            )
 
     val isEmpty: Boolean
-        get() = !isLoading &&
-                errorMessage == null &&
-                students.isEmpty()
+        get() =
+            !isLoading &&
+                    errorMessage == null &&
+                    students.isEmpty()
+
+    val allStudentsPresent: Boolean
+        get() =
+            students.isNotEmpty() &&
+                    students.all { it.isPresent }
+
+    val allStudentsAbsent: Boolean
+        get() =
+            students.isNotEmpty() &&
+                    students.none { it.isPresent }
+
+    val attendanceStatusText: String
+        get() = when {
+            allStudentsPresent ->
+                "All students are present"
+
+            allStudentsAbsent ->
+                "All students are absent"
+
+            else ->
+                "$presentCount present • $absentCount absent"
+        }
+
+    val areAllStudentsPresent: Boolean
+        get() =
+            students.isNotEmpty() &&
+                    students.all { student ->
+                        student.isPresent
+                    }
+
+    val areAllStudentsAbsent: Boolean
+        get() =
+            students.isNotEmpty() &&
+                    students.none { student ->
+                        student.isPresent
+                    }
 }
 
 sealed interface AttendanceMarkingIntent {
@@ -91,10 +122,6 @@ sealed interface AttendanceMarkingIntent {
 
     data class DateSelected(
         val date: LocalDate
-    ) : AttendanceMarkingIntent
-
-    data class MarkingModeChanged(
-        val mode: AttendanceMarkingMode
     ) : AttendanceMarkingIntent
 
     data object MarkAllPresent :

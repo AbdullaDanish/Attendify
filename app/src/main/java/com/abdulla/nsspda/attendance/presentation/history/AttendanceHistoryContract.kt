@@ -57,6 +57,9 @@ sealed interface AttendanceHistoryIntent {
     data object PercentageClicked :
         AttendanceHistoryIntent
 
+    data object SearchClicked :
+        AttendanceHistoryIntent
+
     data class AttendanceSessionClicked(
         val date: LocalDate
     ) : AttendanceHistoryIntent
@@ -64,7 +67,6 @@ sealed interface AttendanceHistoryIntent {
     data object RetryClicked :
         AttendanceHistoryIntent
 }
-
 sealed interface AttendanceHistoryEffect {
 
     data object NavigateBack :
@@ -84,6 +86,12 @@ sealed interface AttendanceHistoryEffect {
     ) : AttendanceHistoryEffect
 
     data class NavigateToPercentage(
+        val semester: String,
+        val branch: String,
+        val subject: String
+    ) : AttendanceHistoryEffect
+
+    data class NavigateToSearch(
         val semester: String,
         val branch: String,
         val subject: String

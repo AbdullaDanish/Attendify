@@ -1,5 +1,6 @@
 package com.abdulla.nsspda.attendance.presentation.history
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,11 +26,17 @@ class AttendanceHistoryViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val semester = savedStateHandle.get<String>("semester").orEmpty()
+    private val semester = Uri.decode(
+        savedStateHandle.get<String>("semester").orEmpty()
+    )
 
-    private val branch = savedStateHandle.get<String>("branch").orEmpty()
+    private val branch = Uri.decode(
+        savedStateHandle.get<String>("branch").orEmpty()
+    )
 
-    private val subject = savedStateHandle.get<String>("subject").orEmpty()
+    private val subject = Uri.decode(
+        savedStateHandle.get<String>("subject").orEmpty()
+    )
 
     private var historyJob:
             kotlinx.coroutines.Job? = null
@@ -66,7 +73,9 @@ class AttendanceHistoryViewModel @Inject constructor(
                     AttendanceHistoryEffect.NavigateBack
                 )
             }
-
+            AttendanceHistoryIntent.SearchClicked -> {
+                navigateToSearch()
+            }
             AttendanceHistoryIntent
                 .NewAttendanceClicked -> {
                 navigateToNewAttendance()
@@ -87,7 +96,19 @@ class AttendanceHistoryViewModel @Inject constructor(
             }
         }
     }
+    private fun navigateToSearch() {
+        if (!_uiState.value.isClassValid) {
+            return
+        }
 
+        sendEffect(
+            AttendanceHistoryEffect.NavigateToSearch(
+                semester = semester,
+                branch = branch,
+                subject = subject
+            )
+        )
+    }
     private fun observeAttendanceHistory() {
 
         historyJob?.cancel()

@@ -1,5 +1,6 @@
 package com.abdulla.nsspda.attendance.presentation
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,16 +9,11 @@ import com.abdulla.nsspda.attendance.data.local.toDatabaseDate
 import com.abdulla.nsspda.attendance.domain.repository.AttendanceRepository
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingEffect
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingIntent
-import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingMode
-import com.abdulla.nsspda.attendance.presentation.marking.AttendanceStudentItem
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingUiState
+import com.abdulla.nsspda.attendance.presentation.marking.AttendanceStudentItem
 import com.abdulla.nsspda.student.data.local.Student
 import com.abdulla.nsspda.student.domain.StudentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.Clock
-import java.time.LocalDate
-import java.time.ZoneId
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -27,6 +23,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneId
+import javax.inject.Inject
 
 @HiltViewModel
 class AttendanceMarkingViewModel @Inject constructor(
@@ -37,11 +37,17 @@ class AttendanceMarkingViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val semester = savedStateHandle.get<String>("semester").orEmpty()
+    private val semester = Uri.decode(
+        savedStateHandle.get<String>("semester").orEmpty()
+    )
 
-    private val branch = savedStateHandle.get<String>("branch").orEmpty()
+    private val branch = Uri.decode(
+        savedStateHandle.get<String>("branch").orEmpty()
+    )
 
-    private val subject = savedStateHandle.get<String>("subject").orEmpty()
+    private val subject = Uri.decode(
+        savedStateHandle.get<String>("subject").orEmpty()
+    )
 
     private val initialDate =
         LocalDate.now(clock)
@@ -94,12 +100,6 @@ class AttendanceMarkingViewModel @Inject constructor(
                 )
             }
 
-            is AttendanceMarkingIntent
-            .MarkingModeChanged -> {
-                changeMarkingMode(
-                    intent.mode
-                )
-            }
 
             AttendanceMarkingIntent.MarkAllPresent -> {
                 markAll(
@@ -192,6 +192,7 @@ class AttendanceMarkingViewModel @Inject constructor(
                     )
                 }
             }
+
         }
     }
 
@@ -286,30 +287,20 @@ class AttendanceMarkingViewModel @Inject constructor(
         val hasExistingAttendance =
             attendance.isNotEmpty()
 
-        val currentMode =
-            _uiState.value.markingMode
-
-        val defaultAttendance =
-            currentMode ==
-                    AttendanceMarkingMode
-                        .MARK_ABSENTEES
-
         val studentItems =
             students.map { student ->
-                val existing =
+                val existingAttendance =
                     attendanceByUsn[
-                        student.usn
-                            .normalizeUsn()
+                        student.usn.normalizeUsn()
                     ]
 
                 AttendanceStudentItem(
                     studentId = student.id,
-                    studentName =
-                        student.studentName,
+                    studentName = student.studentName,
                     usn = student.usn,
                     isPresent =
-                        existing?.present
-                            ?: defaultAttendance
+                        existingAttendance?.present
+                            ?: true
                 )
             }
 
@@ -318,8 +309,8 @@ class AttendanceMarkingViewModel @Inject constructor(
                 it.usn to it.isPresent
             }
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 selectedDate = date,
                 students = studentItems,
                 originalAttendance =
@@ -328,8 +319,7 @@ class AttendanceMarkingViewModel @Inject constructor(
                     hasExistingAttendance,
                 isLoading = false,
                 pendingDate = null,
-                showDiscardChangesDialog =
-                    false,
+                showDiscardChangesDialog = false,
                 errorMessage = null
             )
         }
@@ -387,30 +377,6 @@ class AttendanceMarkingViewModel @Inject constructor(
         }
     }
 
-    private fun changeMarkingMode(
-        mode: AttendanceMarkingMode
-    ) {
-        val state = _uiState.value
-
-        if (
-            state.markingMode == mode ||
-            state.isSaving
-        ) {
-            return
-        }
-
-        /*
-         * Changing mode does not destroy existing
-         * selections. It changes how a fresh date is
-         * initialized and how the UI explains the
-         * marking workflow.
-         */
-        _uiState.update {
-            it.copy(
-                markingMode = mode
-            )
-        }
-    }
 
     private fun requestDateChange(
         date: LocalDate
@@ -477,10 +443,12 @@ class AttendanceMarkingViewModel @Inject constructor(
                 )
             }
 
-            !state.hasUnsavedChanges -> {
+            // Only an existing attendance record requires changes.
+            state.hasExistingAttendance &&
+                    !state.hasUnsavedChanges -> {
                 sendEffect(
                     AttendanceMarkingEffect.ShowMessage(
-                        "No attendance changes to save."
+                        "Attendance is already up to date."
                     )
                 )
             }
@@ -494,6 +462,8 @@ class AttendanceMarkingViewModel @Inject constructor(
             }
 
             else -> {
+                // A new attendance session can be saved even when
+                // all students remain in their default present state.
                 saveAttendance()
             }
         }

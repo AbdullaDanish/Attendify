@@ -29,6 +29,10 @@ interface StudentRepository {
         subject: String
     ): Int
 
+    suspend fun deleteStudents(
+        studentIds: List<Long>
+    ): Int
+
     fun observeStudentCount(
         semester: String,
         branch: String,

@@ -14,9 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingIntent
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingUiState
+import com.abdulla.nsspda.ui.theme.AppSpacing
 
 @Composable
 fun AttendanceMarkingList(
@@ -28,17 +28,15 @@ fun AttendanceMarkingList(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = 16.dp,
-            top =
-                contentPadding.calculateTopPadding() +
-                        16.dp,
-            end = 16.dp,
-            bottom =
-                contentPadding.calculateBottomPadding() +
-                        24.dp
+            start = AppSpacing.ScreenHorizontal,
+            top = contentPadding.calculateTopPadding() +
+                    AppSpacing.Large,
+            end = AppSpacing.ScreenHorizontal,
+            bottom = contentPadding.calculateBottomPadding() +
+                    AppSpacing.Section
         ),
         verticalArrangement =
-            Arrangement.spacedBy(12.dp)
+            Arrangement.spacedBy(AppSpacing.Medium)
     ) {
         item(
             key = "attendance-date"
@@ -60,27 +58,16 @@ fun AttendanceMarkingList(
         }
 
         item(
-            key = "marking-mode"
-        ) {
-            AttendanceMarkingModeCard(
-                selectedMode = uiState.markingMode,
-                enabled = !uiState.isSaving,
-                onModeSelected = { mode ->
-                    onIntent(
-                        AttendanceMarkingIntent
-                            .MarkingModeChanged(mode)
-                    )
-                }
-            )
-        }
-
-        item(
             key = "bulk-actions"
         ) {
             AttendanceBulkActions(
                 enabled =
                     !uiState.isSaving &&
                             uiState.students.isNotEmpty(),
+                allPresentSelected =
+                    uiState.areAllStudentsPresent,
+                allAbsentSelected =
+                    uiState.areAllStudentsAbsent,
                 onMarkAllPresent = {
                     onIntent(
                         AttendanceMarkingIntent.MarkAllPresent
@@ -97,26 +84,9 @@ fun AttendanceMarkingList(
         item(
             key = "students-heading"
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Students",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Text(
-                    text = "${uiState.totalCount} total",
-                    style = MaterialTheme.typography.labelLarge,
-                    color =
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            StudentsSectionHeader(
+                totalCount = uiState.totalCount
+            )
         }
 
         items(
@@ -138,5 +108,39 @@ fun AttendanceMarkingList(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun StudentsSectionHeader(
+    totalCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                top = AppSpacing.Small
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "Students",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Text(
+            text = if (totalCount == 1) {
+                "1 student"
+            } else {
+                "$totalCount students"
+            },
+            style = MaterialTheme.typography.labelLarge,
+            color =
+                MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

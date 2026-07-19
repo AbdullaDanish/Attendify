@@ -1,39 +1,50 @@
 package com.abdulla.nsspda.navigation
 
 import android.net.Uri
+import androidx.navigation.NavBackStackEntry
 
 object AppRoutes {
+
+    const val ARG_SEMESTER = "semester"
+    const val ARG_BRANCH = "branch"
+    const val ARG_SUBJECT = "subject"
+    const val ARG_DATE = "date"
 
     const val SEMESTER_LIST =
         "semesterListScreen"
 
     const val CLASS_OVERVIEW_PATTERN =
-        "class_overview/{semester}/{branch}/{subject}"
+        "class_overview/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}"
 
     const val STUDENTS_PATTERN =
-        "students/{semester}/{branch}/{subject}"
+        "students/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}"
 
     const val ATTENDANCE_HISTORY_PATTERN =
-        "attendance_history/{semester}/{branch}/{subject}"
+        "attendance_history/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}"
+
+    const val ATTENDANCE_HISTORY_SEARCH_PATTERN =
+        "attendance_history_search/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}"
 
     const val ATTENDANCE_MARKING_PATTERN =
-        "attendance_marking/{semester}/{branch}/{subject}"
+        "attendance_marking/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}"
 
     const val ATTENDANCE_DETAILS_PATTERN =
-        "attendance_details/{semester}/{branch}/{subject}/{date}"
+        "attendance_details/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}/{$ARG_DATE}"
 
     const val ATTENDANCE_PERCENTAGE_PATTERN =
-        "attendance_percentage/{semester}/{branch}/{subject}"
+        "attendance_percentage/{$ARG_SEMESTER}/{$ARG_BRANCH}/{$ARG_SUBJECT}"
 
     fun classOverview(
         semester: String,
         branch: String,
         subject: String
     ): String {
-        return "class_overview/" +
-                "${semester.encode()}/" +
-                "${branch.encode()}/" +
-                subject.encode()
+        return buildClassRoute(
+            baseRoute = "class_overview",
+            semester = semester,
+            branch = branch,
+            subject = subject
+        )
     }
 
     fun students(
@@ -41,10 +52,12 @@ object AppRoutes {
         branch: String,
         subject: String
     ): String {
-        return "students/" +
-                "${semester.encode()}/" +
-                "${branch.encode()}/" +
-                subject.encode()
+        return buildClassRoute(
+            baseRoute = "students",
+            semester = semester,
+            branch = branch,
+            subject = subject
+        )
     }
 
     fun attendanceHistory(
@@ -52,10 +65,25 @@ object AppRoutes {
         branch: String,
         subject: String
     ): String {
-        return "attendance_history/" +
-                "${semester.encode()}/" +
-                "${branch.encode()}/" +
-                subject.encode()
+        return buildClassRoute(
+            baseRoute = "attendance_history",
+            semester = semester,
+            branch = branch,
+            subject = subject
+        )
+    }
+
+    fun attendanceHistorySearch(
+        semester: String,
+        branch: String,
+        subject: String
+    ): String {
+        return buildClassRoute(
+            baseRoute = "attendance_history_search",
+            semester = semester,
+            branch = branch,
+            subject = subject
+        )
     }
 
     fun attendanceMarking(
@@ -63,10 +91,12 @@ object AppRoutes {
         branch: String,
         subject: String
     ): String {
-        return "attendance_marking/" +
-                "${semester.encode()}/" +
-                "${branch.encode()}/" +
-                subject.encode()
+        return buildClassRoute(
+            baseRoute = "attendance_marking",
+            semester = semester,
+            branch = branch,
+            subject = subject
+        )
     }
 
     fun attendanceDetails(
@@ -75,11 +105,17 @@ object AppRoutes {
         subject: String,
         date: String
     ): String {
-        return "attendance_details/" +
-                "${semester.encode()}/" +
-                "${branch.encode()}/" +
-                "${subject.encode()}/" +
-                date.encode()
+        return buildString {
+            append("attendance_details")
+            append("/")
+            append(semester.encode())
+            append("/")
+            append(branch.encode())
+            append("/")
+            append(subject.encode())
+            append("/")
+            append(date.encode())
+        }
     }
 
     fun attendancePercentage(
@@ -87,13 +123,46 @@ object AppRoutes {
         branch: String,
         subject: String
     ): String {
-        return "attendance_percentage/" +
-                "${semester.encode()}/" +
-                "${branch.encode()}/" +
-                subject.encode()
+        return buildClassRoute(
+            baseRoute = "attendance_percentage",
+            semester = semester,
+            branch = branch,
+            subject = subject
+        )
+    }
+
+    fun decodeArgument(
+        value: String?
+    ): String {
+        return Uri.decode(value.orEmpty())
+    }
+
+    private fun buildClassRoute(
+        baseRoute: String,
+        semester: String,
+        branch: String,
+        subject: String
+    ): String {
+        return buildString {
+            append(baseRoute)
+            append("/")
+            append(semester.encode())
+            append("/")
+            append(branch.encode())
+            append("/")
+            append(subject.encode())
+        }
     }
 
     private fun String.encode(): String {
         return Uri.encode(this)
     }
+}
+
+fun NavBackStackEntry.decodedArgument(
+    key: String
+): String {
+    return AppRoutes.decodeArgument(
+        arguments?.getString(key)
+    )
 }

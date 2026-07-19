@@ -1,5 +1,6 @@
 package com.abdulla.nsspda.classoverview.presentation
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,11 +24,17 @@ class ClassOverviewViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val semester = savedStateHandle.get<String>("semester").orEmpty()
+    private val semester = Uri.decode(
+        savedStateHandle.get<String>("semester").orEmpty()
+    )
 
-    private val branch = savedStateHandle.get<String>("branch").orEmpty()
+    private val branch = Uri.decode(
+        savedStateHandle.get<String>("branch").orEmpty()
+    )
 
-    private val subject = savedStateHandle.get<String>("subject").orEmpty()
+    private val subject = Uri.decode(
+        savedStateHandle.get<String>("subject").orEmpty()
+    )
 
     private val _uiState =
         MutableStateFlow(

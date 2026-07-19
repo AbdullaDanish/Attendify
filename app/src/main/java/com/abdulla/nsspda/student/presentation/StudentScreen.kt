@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Deselect
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -26,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +48,7 @@ import com.abdulla.nsspda.R
 import com.abdulla.nsspda.student.presentation.components.AddStudentDialog
 import com.abdulla.nsspda.student.presentation.components.ClassInformationCard
 import com.abdulla.nsspda.student.presentation.components.DeleteAllStudentsDialog
+import com.abdulla.nsspda.student.presentation.components.DeleteSelectedStudentsDialog
 import com.abdulla.nsspda.student.presentation.components.DeleteStudentDialog
 import com.abdulla.nsspda.student.presentation.components.EmptyStudentContent
 import com.abdulla.nsspda.student.presentation.components.ErrorContent
@@ -75,6 +81,98 @@ fun StudentScreen(
             )
         },
         topBar = {
+                if (uiState.isSelectionMode) {
+                    TopAppBar(
+                        navigationIcon = {
+                            IconButton(
+                                enabled = !uiState.isSubmitting,
+                                onClick = {
+                                    onIntent(
+                                        StudentIntent.SelectionModeCancelled
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription =
+                                        "Exit selection mode"
+                                )
+                            }
+                        },
+                        title = {
+                            Text(
+                                text =
+                                    "${uiState.selectedStudentCount} selected",
+                                style =
+                                    MaterialTheme.typography.titleLarge
+                            )
+                        },
+                        actions = {
+                            IconButton(
+                                enabled =
+                                    !uiState.isSubmitting &&
+                                            uiState.students.isNotEmpty(),
+                                onClick = {
+                                    if (uiState.areAllStudentsSelected) {
+                                        onIntent(
+                                            StudentIntent.ClearStudentSelection
+                                        )
+                                    } else {
+                                        onIntent(
+                                            StudentIntent.SelectAllStudents
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        if (uiState.areAllStudentsSelected) {
+                                            Icons.Default.Deselect
+                                        } else {
+                                            Icons.Default.SelectAll
+                                        },
+                                    contentDescription =
+                                        if (uiState.areAllStudentsSelected) {
+                                            "Clear selection"
+                                        } else {
+                                            "Select all students"
+                                        }
+                                )
+                            }
+
+                            IconButton(
+                                enabled =
+                                    uiState.hasSelectedStudents &&
+                                            !uiState.isSubmitting,
+                                onClick = {
+                                    onIntent(
+                                        StudentIntent.DeleteSelectedClicked
+                                    )
+                                }
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        Icons.Default.DeleteOutline,
+                                    contentDescription =
+                                        "Delete selected students",
+                                    tint =
+                                        if (uiState.hasSelectedStudents) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            MaterialTheme.colorScheme
+                                                .onSurfaceVariant
+                                        }
+                                )
+                            }
+                        },
+                        colors =
+                            TopAppBarDefaults.topAppBarColors(
+                                containerColor =
+                                    MaterialTheme.colorScheme.surface
+                            )
+                    )
+                } else {
             CenterAlignedTopAppBar(
                 title = {
                     Column(
@@ -165,6 +263,27 @@ fun StudentScreen(
                                     )
                                 }
                             )
+                            DropdownMenuItem(
+                                text = {
+                                    Text("Select Multiple Delete")
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Checklist,
+                                        contentDescription = null
+                                    )
+                                },
+                                enabled =
+                                    uiState.students.isNotEmpty() &&
+                                            !uiState.isSubmitting,
+                                onClick = {
+                                    isOverflowMenuVisible = false
+
+                                    onIntent(
+                                        StudentIntent.SelectionModeStarted
+                                    )
+                                }
+                            )
 
                             DropdownMenuItem(
                                 text = {
@@ -197,44 +316,46 @@ fun StudentScreen(
                             MaterialTheme.colorScheme.surface
                     )
             )
-        },
+        } },
         floatingActionButton = {
             val isAddStudentEnabled =
                 uiState.isClassValid &&
                         !uiState.isSubmitting
-
-            ExtendedFloatingActionButton(
-                onClick = {
-                    if (isAddStudentEnabled) {
-                        onIntent(
-                            StudentIntent.AddStudentClicked
+            if (!uiState.isSelectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        if (isAddStudentEnabled) {
+                            onIntent(
+                                StudentIntent.AddStudentClicked
+                            )
+                        }
+                    },
+                    containerColor = if (isAddStudentEnabled) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    contentColor = if (isAddStudentEnabled) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                            .copy(alpha = 0.38f)
+                    },
+                    modifier = Modifier.alpha(
+                        if (isAddStudentEnabled) 1f else 0.6f
+                    ),
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null
                         )
+                    },
+                    text = {
+                        Text("Add student")
                     }
-                },
-                containerColor = if (isAddStudentEnabled) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
-                contentColor = if (isAddStudentEnabled) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                        .copy(alpha = 0.38f)
-                },
-                modifier = Modifier.alpha(
-                    if (isAddStudentEnabled) 1f else 0.6f
-                ),
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null
-                    )
-                },
-                text = {
-                    Text("Add student")
-                }
-            )        }
+                )
+            }
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -425,6 +546,25 @@ fun StudentScreen(
             )
         }
     }
+
+    if (uiState.isDeleteSelectedDialogVisible) {
+        DeleteSelectedStudentsDialog(
+            selectedCount =
+                uiState.selectedStudentCount,
+            isSubmitting =
+                uiState.isSubmitting,
+            onConfirm = {
+                onIntent(
+                    StudentIntent.DeleteSelectedConfirmed
+                )
+            },
+            onDismiss = {
+                onIntent(
+                    StudentIntent.DeleteSelectedDismissed
+                )
+            }
+        )
+    }
 }
 
 
@@ -490,6 +630,17 @@ private fun StudentScreenContent(
             else -> {
                 StudentList(
                     students = uiState.students,
+                    isSelectionMode =
+                        uiState.isSelectionMode,
+                    selectedStudentIds =
+                        uiState.selectedStudentIds,
+                    onStudentSelected = { student ->
+                        onIntent(
+                            StudentIntent.StudentSelectionToggled(
+                                studentId = student.id
+                            )
+                        )
+                    },
                     onDeleteStudent = { student ->
                         onIntent(
                             StudentIntent.DeleteStudentClicked(
@@ -497,8 +648,7 @@ private fun StudentScreenContent(
                             )
                         )
                     },
-                    modifier = Modifier
-                        .fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

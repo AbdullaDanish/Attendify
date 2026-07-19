@@ -19,35 +19,44 @@ data class StudentUiState(
     val studentToDelete: Student? = null,
     val isDeleteAllDialogVisible: Boolean = false,
 
+    // Multi-selection
+    val isSelectionMode: Boolean = false,
+    val selectedStudentIds: Set<Long> = emptySet(),
+    val isDeleteSelectedDialogVisible: Boolean = false,
+
     val screenError: String? = null,
 
     val importState: StudentImportUiState =
         StudentImportUiState.Idle
 ) {
     val isClassValid: Boolean
-        get() {
-            return semester.isNotBlank() &&
+        get() =
+            semester.isNotBlank() &&
                     branch.isNotBlank() &&
                     subject.isNotBlank()
-        }
 
     val isEmpty: Boolean
-        get() {
-            return !isLoading &&
+        get() =
+            !isLoading &&
                     screenError == null &&
                     students.isEmpty()
-        }
 
     val isImportInProgress: Boolean
-        get() {
-            return importState is
-                    StudentImportUiState.Analyzing ||
-                    importState is
-                            StudentImportUiState.CreatingPreview ||
-                    importState is
-                            StudentImportUiState.Importing
-        }
+        get() =
+            importState is StudentImportUiState.Analyzing ||
+                    importState is StudentImportUiState.CreatingPreview ||
+                    importState is StudentImportUiState.Importing
 
+    val selectedStudentCount: Int
+        get() = selectedStudentIds.size
+
+    val hasSelectedStudents: Boolean
+        get() = selectedStudentIds.isNotEmpty()
+
+    val areAllStudentsSelected: Boolean
+        get() =
+            students.isNotEmpty() &&
+                    selectedStudentIds.size == students.size
 }
 
 sealed interface StudentImportUiState {
@@ -174,6 +183,31 @@ sealed interface StudentIntent {
         StudentIntent
 
     data object ImportCancelled :
+        StudentIntent
+
+    data object SelectionModeStarted :
+        StudentIntent
+
+    data object SelectionModeCancelled :
+        StudentIntent
+
+    data class StudentSelectionToggled(
+        val studentId: Long
+    ) : StudentIntent
+
+    data object SelectAllStudents :
+        StudentIntent
+
+    data object ClearStudentSelection :
+        StudentIntent
+
+    data object DeleteSelectedClicked :
+        StudentIntent
+
+    data object DeleteSelectedConfirmed :
+        StudentIntent
+
+    data object DeleteSelectedDismissed :
         StudentIntent
 }
 

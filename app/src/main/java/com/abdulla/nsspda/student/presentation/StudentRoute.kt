@@ -1,6 +1,7 @@
 package com.abdulla.nsspda.student.presentation
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.SnackbarHostState
@@ -69,7 +70,13 @@ fun StudentRoute(
         }
     }
 
-
+    BackHandler(
+        enabled = uiState.isSelectionMode
+    ) {
+        viewModel.onIntent(
+            StudentIntent.SelectionModeCancelled
+        )
+    }
     StudentScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,

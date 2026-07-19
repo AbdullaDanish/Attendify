@@ -87,4 +87,26 @@ interface StudentDao {
         branch: String,
         subject: String
     ): Flow<Int>
+    @Query(
+        """
+    DELETE FROM student
+    WHERE student_id IN (:studentIds)
+    """
+    )
+    suspend fun deleteStudentsByIds(
+        studentIds: List<Long>
+    ): Int
+
+    @Transaction
+    suspend fun deleteStudentsByIdsInTransaction(
+        studentIds: List<Long>
+    ): Int {
+        if (studentIds.isEmpty()) {
+            return 0
+        }
+
+        return deleteStudentsByIds(
+            studentIds = studentIds.distinct()
+        )
+    }
 }

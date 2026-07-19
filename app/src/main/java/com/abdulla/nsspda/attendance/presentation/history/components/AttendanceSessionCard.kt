@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -197,18 +198,21 @@ fun AttendanceSessionCard(
                 HistoryMetric(
                     label = "Present",
                     value = item.presentCount,
+                    valueColor = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.weight(1f)
                 )
 
                 HistoryMetric(
                     label = "Absent",
                     value = item.absentCount,
+                    valueColor = MaterialTheme.colorScheme.error,
                     modifier = Modifier.weight(1f)
                 )
 
                 HistoryMetric(
                     label = "Total",
                     value = item.totalCount,
+                    valueColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -220,36 +224,32 @@ fun AttendanceSessionCard(
 private fun HistoryMetric(
     label: String,
     value: Int,
+    valueColor: Color,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        color =
-            MaterialTheme.colorScheme.surfaceVariant
+        color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column(
             modifier = Modifier.padding(
                 horizontal = 8.dp,
                 vertical = 10.dp
             ),
-            horizontalAlignment =
-                Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value.toString(),
-                style =
-                    MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
             )
 
             Text(
                 text = label,
-                style =
-                    MaterialTheme.typography.labelSmall,
-                color =
-                    MaterialTheme.colorScheme
-                        .onSurfaceVariant
+                style = MaterialTheme.typography.labelSmall,
+                color = valueColor
             )
         }
     }

@@ -233,6 +233,11 @@ private fun AttendanceHistoryContent(
             AttendanceHistoryList(
                 uiState = uiState,
                 contentPadding = contentPadding,
+                onSearchClick = {
+                    onIntent(
+                        AttendanceHistoryIntent.SearchClicked
+                    )
+                },
                 onSessionClicked = { date ->
                     onIntent(
                         AttendanceHistoryIntent

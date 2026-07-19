@@ -61,8 +61,5 @@ fun SemesterRoute(
         uiState = uiState.value,
         snackbarHostState = snackbarHostState,
         onIntent = viewModel::onIntent,
-        onNavigateBack = {
-            navController.navigateUp()
-        }
     )
 }

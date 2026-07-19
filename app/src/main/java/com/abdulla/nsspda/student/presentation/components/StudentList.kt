@@ -8,11 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.abdulla.nsspda.student.data.local.Student
-
+import com.abdulla.nsspda.ui.theme.AppSpacing
 
 @Composable
 fun StudentList(
     students: List<Student>,
+    isSelectionMode: Boolean,
+    selectedStudentIds: Set<Long>,
+    onStudentSelected: (Student) -> Unit,
     onDeleteStudent: (Student) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -22,16 +25,22 @@ fun StudentList(
             bottom = 104.dp
         ),
         verticalArrangement =
-            Arrangement.spacedBy(10.dp)
+            Arrangement.spacedBy(AppSpacing.Medium)
     ) {
         items(
             items = students,
-            key = { student ->
-                student.id
-            }
+            key = Student::id
         ) { student ->
             StudentCard(
                 student = student,
+                isSelectionMode = isSelectionMode,
+                isSelected =
+                    student.id in selectedStudentIds,
+                onClick = {
+                    if (isSelectionMode) {
+                        onStudentSelected(student)
+                    }
+                },
                 onDelete = {
                     onDeleteStudent(student)
                 }

@@ -99,4 +99,16 @@ class StudentRepositoryImpl @Inject constructor(
             subject = subject
         )
     }
+
+    override suspend fun deleteStudents(
+        studentIds: List<Long>
+    ): Int {
+        if (studentIds.isEmpty()) {
+            return 0
+        }
+
+        return studentDao.deleteStudentsByIdsInTransaction(
+            studentIds = studentIds
+        )
+    }
 }

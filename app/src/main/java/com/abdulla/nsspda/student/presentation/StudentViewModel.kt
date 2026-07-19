@@ -29,23 +29,18 @@ class StudentViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val semester: String =
-        savedStateHandle
-            .get<String>("semester")
-            .orEmpty()
-            .trim()
     private var selectedImportUri: Uri? = null
-    private val branch: String =
-        savedStateHandle
-            .get<String>("branch")
-            .orEmpty()
-            .trim()
+    private val semester = Uri.decode(
+        savedStateHandle.get<String>("semester").orEmpty()
+    )
 
-    private val subject: String =
-        savedStateHandle
-            .get<String>("subject")
-            .orEmpty()
-            .trim()
+    private val branch = Uri.decode(
+        savedStateHandle.get<String>("branch").orEmpty()
+    )
+
+    private val subject = Uri.decode(
+        savedStateHandle.get<String>("subject").orEmpty()
+    )
 
     private val _uiState =
         MutableStateFlow(
@@ -156,7 +151,39 @@ class StudentViewModel @Inject constructor(
             StudentIntent.ImportPreviewConfirmed -> {
                 confirmStudentImport()
             }
+            StudentIntent.SelectionModeStarted -> {
+                startSelectionMode()
+            }
 
+            StudentIntent.SelectionModeCancelled -> {
+                cancelSelectionMode()
+            }
+
+            is StudentIntent.StudentSelectionToggled -> {
+                toggleStudentSelection(
+                    studentId = intent.studentId
+                )
+            }
+
+            StudentIntent.SelectAllStudents -> {
+                selectAllStudents()
+            }
+
+            StudentIntent.ClearStudentSelection -> {
+                clearStudentSelection()
+            }
+
+            StudentIntent.DeleteSelectedClicked -> {
+                requestDeleteSelected()
+            }
+
+            StudentIntent.DeleteSelectedConfirmed -> {
+                deleteSelectedStudents()
+            }
+
+            StudentIntent.DeleteSelectedDismissed -> {
+                dismissDeleteSelected()
+            }
             StudentIntent.ImportPreviewDismissed,
             StudentIntent.ImportResultDismissed,
             StudentIntent.ImportErrorDismissed,
@@ -206,8 +233,20 @@ class StudentViewModel @Inject constructor(
                     }
                     .collect { students ->
                         _uiState.update { state ->
+                            val availableIds = students
+                                .map(Student::id)
+                                .toSet()
+
+                            val validSelection =
+                                state.selectedStudentIds
+                                    .intersect(availableIds)
+
                             state.copy(
                                 students = students,
+                                selectedStudentIds = validSelection,
+                                isSelectionMode =
+                                    state.isSelectionMode &&
+                                            students.isNotEmpty(),
                                 isLoading = false,
                                 screenError = null
                             )
@@ -923,6 +962,206 @@ class StudentViewModel @Inject constructor(
 
             else -> {
                 "The workbook could not be analyzed. Please select a valid .xls or .xlsx file."
+            }
+        }
+    }
+
+    private fun startSelectionMode() {
+        val state = _uiState.value
+
+        if (
+            state.students.isEmpty() ||
+            state.isSubmitting
+        ) {
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isSelectionMode = true,
+                selectedStudentIds = emptySet()
+            )
+        }
+    }
+
+    private fun cancelSelectionMode() {
+        if (_uiState.value.isSubmitting) {
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isSelectionMode = false,
+                selectedStudentIds = emptySet(),
+                isDeleteSelectedDialogVisible = false
+            )
+        }
+    }
+
+    private fun toggleStudentSelection(
+        studentId: Long
+    ) {
+        val state = _uiState.value
+
+        if (
+            !state.isSelectionMode ||
+            state.isSubmitting
+        ) {
+            return
+        }
+
+        val studentExists =
+            state.students.any { student ->
+                student.id == studentId
+            }
+
+        if (!studentExists) {
+            return
+        }
+
+        _uiState.update {
+            val updatedSelection =
+                if (studentId in it.selectedStudentIds) {
+                    it.selectedStudentIds - studentId
+                } else {
+                    it.selectedStudentIds + studentId
+                }
+
+            it.copy(
+                selectedStudentIds = updatedSelection
+            )
+        }
+    }
+
+    private fun selectAllStudents() {
+        val state = _uiState.value
+
+        if (
+            !state.isSelectionMode ||
+            state.isSubmitting
+        ) {
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                selectedStudentIds =
+                    it.students
+                        .map(Student::id)
+                        .toSet()
+            )
+        }
+    }
+
+    private fun clearStudentSelection() {
+        if (_uiState.value.isSubmitting) {
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                selectedStudentIds = emptySet()
+            )
+        }
+    }
+
+    private fun requestDeleteSelected() {
+        val state = _uiState.value
+
+        if (
+            !state.isSelectionMode ||
+            !state.hasSelectedStudents ||
+            state.isSubmitting
+        ) {
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isDeleteSelectedDialogVisible = true
+            )
+        }
+    }
+
+    private fun dismissDeleteSelected() {
+        if (_uiState.value.isSubmitting) {
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isDeleteSelectedDialogVisible = false
+            )
+        }
+    }
+
+    private fun deleteSelectedStudents() {
+        val state = _uiState.value
+
+        if (
+            state.isSubmitting ||
+            !state.isSelectionMode ||
+            state.selectedStudentIds.isEmpty()
+        ) {
+            return
+        }
+
+        val selectedIds =
+            state.selectedStudentIds.toList()
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isSubmitting = true
+                )
+            }
+
+            try {
+                val deletedCount =
+                    repository.deleteStudents(
+                        studentIds = selectedIds
+                    )
+
+                _uiState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        isSelectionMode = false,
+                        selectedStudentIds = emptySet(),
+                        isDeleteSelectedDialogVisible = false
+                    )
+                }
+
+                effectChannel.send(
+                    StudentEffect.ShowMessage(
+                        message = when {
+                            deletedCount == 0 ->
+                                "No selected students were found."
+
+                            deletedCount == 1 ->
+                                "1 student deleted."
+
+                            else ->
+                                "$deletedCount students deleted."
+                        }
+                    )
+                )
+            } catch (
+                exception: CancellationException
+            ) {
+                throw exception
+            } catch (exception: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isSubmitting = false,
+                        isDeleteSelectedDialogVisible = false
+                    )
+                }
+
+                effectChannel.send(
+                    StudentEffect.ShowMessage(
+                        "Unable to delete the selected students."
+                    )
+                )
             }
         }
     }

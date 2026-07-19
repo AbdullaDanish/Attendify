@@ -7,29 +7,32 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.abdulla.nsspda.semester.data.Semester
+import com.abdulla.nsspda.ui.theme.AppSpacing
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SemesterCard(
     semester: Semester,
@@ -37,99 +40,209 @@ fun SemesterCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var menuExpanded by remember {
+        mutableStateOf(false)
+    }
+
     val semesterValue = remember(semester.semester) {
         semester.semester.trim()
     }
 
     val semesterNumber = remember(semesterValue) {
-        semesterValue.firstOrNull()
-            ?.toString()
-            .orEmpty()
-            .ifBlank { "Not specified" }
+        semesterValue
+            .takeWhile { character ->
+                character.isDigit()
+            }
+            .ifBlank {
+                semesterValue
+                    .firstOrNull()
+                    ?.toString()
+                    .orEmpty()
+            }
+            .ifBlank {
+                "—"
+            }
     }
 
     val section = remember(semesterValue) {
         semesterValue
-            .drop(1)
+            .dropWhile { character ->
+                character.isDigit()
+            }
             .trim()
-            .ifBlank { "Not specified" }
+            .ifBlank {
+                "Not specified"
+            }
     }
 
     ElevatedCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor =
+                MaterialTheme.colorScheme.surface
+        ),
         elevation = CardDefaults.elevatedCardElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 2.dp
+            defaultElevation = 1.dp,
+            pressedElevation = 0.dp
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = 20.dp,
-                    vertical = 18.dp
-                ),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(AppSpacing.CardPadding),
+            verticalArrangement =
+                Arrangement.spacedBy(AppSpacing.Large)
         ) {
-            Surface(
-                modifier = Modifier.size(52.dp),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment =
+                    Alignment.CenterVertically,
+                horizontalArrangement =
+                    Arrangement.spacedBy(AppSpacing.Medium)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color =
+                        MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = semesterNumber,
+                            style =
+                                MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color =
+                                MaterialTheme.colorScheme
+                                    .onPrimaryContainer
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement =
+                        Arrangement.spacedBy(AppSpacing.XSmall)
                 ) {
                     Text(
-                        text = semesterNumber,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        text = semester.subject.ifBlank {
+                            "Unnamed subject"
+                        },
+                        style =
+                            MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color =
+                            MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Text(
+                        text = buildString {
+                            append(
+                                semester.branch.ifBlank {
+                                    "Branch not specified"
+                                }
+                            )
+
+                            append(" • ")
+
+                            append(
+                                semesterValue.ifBlank {
+                                    "Semester not specified"
+                                }
+                            )
+                        },
+                        style =
+                            MaterialTheme.typography.bodyMedium,
+                        color =
+                            MaterialTheme.colorScheme
+                                .onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Box {
+                    IconButton(
+                        onClick = {
+                            menuExpanded = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector =
+                                Icons.Default.MoreVert,
+                            contentDescription =
+                                "Class options",
+                            tint =
+                                MaterialTheme.colorScheme
+                                    .onSurfaceVariant
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = {
+                            menuExpanded = false
+                        }
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text("Delete class")
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector =
+                                        Icons.Default.DeleteOutline,
+                                    contentDescription = null,
+                                    tint =
+                                        MaterialTheme.colorScheme.error
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                onDelete()
+                            }
+                        )
+                    }
+                }
+
+                Icon(
+                    imageVector =
+                        Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint =
+                        MaterialTheme.colorScheme.primary
+                )
             }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement =
+                    Arrangement.spacedBy(AppSpacing.Small)
             ) {
-                Text(
-                    text = semester.subject.ifBlank {
-                        "Unnamed subject"
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                ClassInfoItem(
+                    label = "Semester",
+                    value = semesterNumber,
+                    modifier = Modifier.weight(1f)
                 )
 
-                SemesterInfoRow(
+                ClassInfoItem(
+                    label = "Section",
+                    value = section,
+                    modifier = Modifier.weight(1f)
+                )
+
+                ClassInfoItem(
                     label = "Branch",
                     value = semester.branch.ifBlank {
                         "Not specified"
-                    }
-                )
-
-                SemesterInfoRow(
-                    label = "Section",
-                    value = section
-                )
-            }
-
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.semantics {
-                    contentDescription =
-                        "Delete ${semester.subject} class"
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DeleteOutline,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
+                    },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -137,29 +250,47 @@ fun SemesterCard(
 }
 
 @Composable
-private fun SemesterInfoRow(
+private fun ClassInfoItem(
     label: String,
     value: String,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Surface(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        shape = MaterialTheme.shapes.small,
+        color =
+            MaterialTheme.colorScheme.surfaceVariant
     ) {
-        Text(
-            text = "$label:",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Column(
+            modifier = Modifier.padding(
+                horizontal = AppSpacing.Small,
+                vertical = AppSpacing.Medium
+            ),
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+            verticalArrangement =
+                Arrangement.spacedBy(AppSpacing.XSmall)
+        ) {
+            Text(
+                text = value,
+                style =
+                    MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color =
+                    MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
 
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+            Text(
+                text = label,
+                style =
+                    MaterialTheme.typography.labelSmall,
+                color =
+                    MaterialTheme.colorScheme
+                        .onSurfaceVariant,
+                maxLines = 1
+            )
+        }
     }
 }

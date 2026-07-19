@@ -2,14 +2,28 @@ package com.abdulla.nsspda.semester.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AccountTree
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,10 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.abdulla.nsspda.ui.theme.AppSpacing
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSemesterDialog(
+fun AddSemesterSheet(
     isSubmitting: Boolean,
     onDismiss: () -> Unit,
     onSubmit: (
@@ -40,6 +57,10 @@ fun AddSemesterDialog(
     var selectedSubject by rememberSaveable {
         mutableStateOf("")
     }
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
 
     val semesters = remember {
         listOf(
@@ -76,59 +97,97 @@ fun AddSemesterDialog(
                 selectedSubject.isNotBlank() &&
                 !isSubmitting
 
-    AlertDialog(
+    ModalBottomSheet(
+        sheetState = sheetState,
         onDismissRequest = {
             if (!isSubmitting) {
                 onDismiss()
             }
         },
-        title = {
-            Text("Add class")
-        },
-        text = {
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        contentWindowInsets = {
+            WindowInsets(0)
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(
+                    rememberScrollState()
+                )
+                .padding(
+                    start = AppSpacing.ScreenHorizontal,
+                    end = AppSpacing.ScreenHorizontal,
+                    bottom = AppSpacing.Section
+                ),
+            verticalArrangement =
+                Arrangement.spacedBy(AppSpacing.Large)
+        ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(
-                        rememberScrollState()
-                    ),
                 verticalArrangement =
-                    Arrangement.spacedBy(16.dp)
+                    Arrangement.spacedBy(AppSpacing.Small)
             ) {
-                EditableDropdownMenuWithLabel(
-                    label =
-                        "Semester and section",
-                    options = semesters,
-                    selectedOption =
-                        selectedSemester,
-                    onOptionSelected = {
-                        selectedSemester = it
-                    }
+                Text(
+                    text = "Create class",
+                    style =
+                        MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
-                EditableDropdownMenuWithLabel(
-                    label = "Branch",
-                    options = branches,
-                    selectedOption =
-                        selectedBranch,
-                    onOptionSelected = {
-                        selectedBranch = it
-                    }
-                )
-
-                EditableDropdownMenuWithLabel(
-                    label = "Subject",
-                    options = subjects,
-                    selectedOption =
-                        selectedSubject,
-                    onOptionSelected = {
-                        selectedSubject = it
-                    }
+                Text(
+                    text =
+                        "Select the semester, branch and subject for this class.",
+                    style =
+                        MaterialTheme.typography.bodyMedium,
+                    color =
+                        MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        },
-        confirmButton = {
-            TextButton(
+
+            ClassSelectionField(
+                label = "Semester and section",
+                placeholder = "Select semester and section",
+                leadingIcon = Icons.Default.School,
+                options = semesters,
+                selectedOption = selectedSemester,
+                enabled = !isSubmitting,
+                customOptionLabel = "Enter custom semester",
+                onOptionSelected = {
+                    selectedSemester = it
+                }
+            )
+
+            ClassSelectionField(
+                label = "Branch",
+                placeholder = "Select branch",
+                leadingIcon = Icons.Default.AccountTree,
+                options = branches,
+                selectedOption = selectedBranch,
+                enabled = !isSubmitting,
+                customOptionLabel = "Enter custom branch",
+                onOptionSelected = {
+                    selectedBranch = it
+                }
+            )
+
+            ClassSelectionField(
+                label = "Subject",
+                placeholder = "Select subject",
+                leadingIcon = Icons.Default.MenuBook,
+                options = subjects,
+                selectedOption = selectedSubject,
+                enabled = !isSubmitting,
+                customOptionLabel = "Enter custom subject",
+                onOptionSelected = {
+                    selectedSubject = it
+                }
+            )
+
+            Button(
                 enabled = canSubmit,
                 onClick = {
                     onSubmit(
@@ -136,25 +195,36 @@ fun AddSemesterDialog(
                         selectedBranch,
                         selectedSubject
                     )
-                }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 54.dp),
+                shape = MaterialTheme.shapes.medium
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color =
+                            MaterialTheme.colorScheme.onPrimary
                     )
                 } else {
-                    Text("Add")
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+
+                    Text(
+                        text = "Create class",
+                        modifier = Modifier.padding(
+                            start = AppSpacing.Small
+                        ),
+                        style =
+                            MaterialTheme.typography.labelLarge
+                    )
                 }
             }
-        },
-        dismissButton = {
-            TextButton(
-                enabled = !isSubmitting,
-                onClick = onDismiss
-            ) {
-                Text("Cancel")
-            }
         }
-    )
+    }
 }
+

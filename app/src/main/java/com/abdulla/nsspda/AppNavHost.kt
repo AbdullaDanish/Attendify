@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.abdulla.nsspda.attendance.presentation.details.AttendanceDetailsRoute
 import com.abdulla.nsspda.attendance.presentation.history.AttendanceHistoryRoute
+import com.abdulla.nsspda.attendance.presentation.history.search.AttendanceHistorySearchRoute
 import com.abdulla.nsspda.attendance.presentation.marking.AttendanceMarkingRoute
 import com.abdulla.nsspda.attendance.presentation.percentage.AttendancePercentageRoute
 import com.abdulla.nsspda.classoverview.presentation.ClassOverviewRoute
@@ -29,9 +30,6 @@ fun MyAppNavHost(
     NavHost(
         navController = navController,
         startDestination = AppRoutes.SEMESTER_LIST,
-
-        // Forward navigation:
-        // New screen enters gently from the right.
         enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { fullWidth ->
@@ -47,8 +45,6 @@ fun MyAppNavHost(
                 )
             )
         },
-
-        // Current screen moves slightly left and fades.
         exitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { fullWidth ->
@@ -64,9 +60,6 @@ fun MyAppNavHost(
                 )
             )
         },
-
-        // Back navigation:
-        // Previous screen returns gently from the left.
         popEnterTransition = {
             slideInHorizontally(
                 initialOffsetX = { fullWidth ->
@@ -82,8 +75,6 @@ fun MyAppNavHost(
                 )
             )
         },
-
-        // Current screen exits toward the right.
         popExitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { fullWidth ->
@@ -125,7 +116,9 @@ fun MyAppNavHost(
                             branch = branch,
                             subject = subject
                         )
-                    )
+                    ) {
+                        launchSingleTop = true
+                    }
                 },
                 onNavigateToAttendanceHistory = {
                         semester,
@@ -138,7 +131,9 @@ fun MyAppNavHost(
                             branch = branch,
                             subject = subject
                         )
-                    )
+                    ) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -162,6 +157,68 @@ fun MyAppNavHost(
         }
 
         composable(
+            route =
+                AppRoutes.ATTENDANCE_HISTORY_SEARCH_PATTERN,
+            arguments = classArguments(),
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth ->
+                        fullWidth / 4
+                    },
+                    animationSpec = tween(
+                        durationMillis =
+                            AppAnimation.Normal,
+                        easing =
+                            FastOutSlowInEasing
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis =
+                            AppAnimation.Normal
+                    )
+                )
+            },
+            exitTransition = {
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis =
+                            AppAnimation.Fast
+                    )
+                )
+            },
+            popEnterTransition = {
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis =
+                            AppAnimation.Normal
+                    )
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth ->
+                        fullWidth / 4
+                    },
+                    animationSpec = tween(
+                        durationMillis =
+                            AppAnimation.Fast,
+                        easing =
+                            FastOutSlowInEasing
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis =
+                            AppAnimation.Fast
+                    )
+                )
+            }
+        ) {
+            AttendanceHistorySearchRoute(
+                navController = navController
+            )
+        }
+
+        composable(
             route = AppRoutes.ATTENDANCE_MARKING_PATTERN,
             arguments = classArguments()
         ) {
@@ -172,11 +229,12 @@ fun MyAppNavHost(
 
         composable(
             route = AppRoutes.ATTENDANCE_DETAILS_PATTERN,
-            arguments = classArguments() + navArgument(
-                name = "date"
-            ) {
-                type = NavType.StringType
-            }
+            arguments = classArguments() +
+                    navArgument(
+                        name = AppRoutes.ARG_DATE
+                    ) {
+                        type = NavType.StringType
+                    }
         ) {
             AttendanceDetailsRoute(
                 navController = navController
@@ -184,7 +242,8 @@ fun MyAppNavHost(
         }
 
         composable(
-            route = AppRoutes.ATTENDANCE_PERCENTAGE_PATTERN,
+            route =
+                AppRoutes.ATTENDANCE_PERCENTAGE_PATTERN,
             arguments = classArguments()
         ) {
             AttendancePercentageRoute(
@@ -195,13 +254,13 @@ fun MyAppNavHost(
 }
 
 private fun classArguments() = listOf(
-    navArgument("semester") {
+    navArgument(AppRoutes.ARG_SEMESTER) {
         type = NavType.StringType
     },
-    navArgument("branch") {
+    navArgument(AppRoutes.ARG_BRANCH) {
         type = NavType.StringType
     },
-    navArgument("subject") {
+    navArgument(AppRoutes.ARG_SUBJECT) {
         type = NavType.StringType
     }
 )
