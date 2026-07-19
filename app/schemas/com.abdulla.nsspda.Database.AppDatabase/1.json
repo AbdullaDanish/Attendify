@@ -1,0 +1,258 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "e0aab2afd557d3ef76de19452fde542b",
+    "entities": [
+      {
+        "tableName": "semester_table",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `semester` TEXT NOT NULL, `branch` TEXT NOT NULL, `subject` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "semester",
+            "columnName": "semester",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "branch",
+            "columnName": "branch",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_semester_table_semester_branch_subject",
+            "unique": true,
+            "columnNames": [
+              "semester",
+              "branch",
+              "subject"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_semester_table_semester_branch_subject` ON `${TABLE_NAME}` (`semester`, `branch`, `subject`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "student_attendance",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `stdname` TEXT NOT NULL, `usn` TEXT NOT NULL, `sem` TEXT NOT NULL, `branch` TEXT NOT NULL, `subject` TEXT NOT NULL, `present` INTEGER NOT NULL, `date` INTEGER NOT NULL, FOREIGN KEY(`sem`, `branch`, `subject`) REFERENCES `semester_table`(`semester`, `branch`, `subject`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "studentName",
+            "columnName": "stdname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usn",
+            "columnName": "usn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "semester",
+            "columnName": "sem",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "branch",
+            "columnName": "branch",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "present",
+            "columnName": "present",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_student_attendance_sem_branch_subject_usn_date",
+            "unique": true,
+            "columnNames": [
+              "sem",
+              "branch",
+              "subject",
+              "usn",
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_student_attendance_sem_branch_subject_usn_date` ON `${TABLE_NAME}` (`sem`, `branch`, `subject`, `usn`, `date`)"
+          },
+          {
+            "name": "index_student_attendance_sem_branch_subject_date",
+            "unique": false,
+            "columnNames": [
+              "sem",
+              "branch",
+              "subject",
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_student_attendance_sem_branch_subject_date` ON `${TABLE_NAME}` (`sem`, `branch`, `subject`, `date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "semester_table",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "sem",
+              "branch",
+              "subject"
+            ],
+            "referencedColumns": [
+              "semester",
+              "branch",
+              "subject"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "student",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`student_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `usn` TEXT NOT NULL, `student_name` TEXT NOT NULL, `sem` TEXT NOT NULL, `branch` TEXT NOT NULL, `subject` TEXT NOT NULL, FOREIGN KEY(`sem`, `branch`, `subject`) REFERENCES `semester_table`(`semester`, `branch`, `subject`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "student_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usn",
+            "columnName": "usn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "studentName",
+            "columnName": "student_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "semester",
+            "columnName": "sem",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "branch",
+            "columnName": "branch",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "student_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_student_class",
+            "unique": false,
+            "columnNames": [
+              "sem",
+              "branch",
+              "subject"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_student_class` ON `${TABLE_NAME}` (`sem`, `branch`, `subject`)"
+          },
+          {
+            "name": "index_student_usn_class_unique",
+            "unique": true,
+            "columnNames": [
+              "usn",
+              "sem",
+              "branch",
+              "subject"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_student_usn_class_unique` ON `${TABLE_NAME}` (`usn`, `sem`, `branch`, `subject`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "semester_table",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "sem",
+              "branch",
+              "subject"
+            ],
+            "referencedColumns": [
+              "semester",
+              "branch",
+              "subject"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e0aab2afd557d3ef76de19452fde542b')"
+    ]
+  }
+}
