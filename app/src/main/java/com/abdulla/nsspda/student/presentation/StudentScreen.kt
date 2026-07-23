@@ -362,17 +362,6 @@ fun StudentScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            Image(
-                painter = painterResource(
-                    id = R.drawable.pdalogo
-                ),
-                contentDescription = null,
-                modifier = Modifier
-                    .matchParentSize()
-                    .alpha(0.035f),
-                contentScale = ContentScale.Fit
-            )
-
             StudentScreenContent(
                 uiState = uiState,
                 onIntent = onIntent,

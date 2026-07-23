@@ -3,7 +3,7 @@ package com.abdulla.nsspda
 import androidx.room.TypeConverter
 import java.util.Date
 
-class Converters {
+object Converters {
 
     @TypeConverter
     fun fromTimestamp(value: Long?): Date? {
